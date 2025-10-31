@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CPR / SFA Test Review – Interactive + Coaching</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --accent: #2563eb;
+      --accent-soft: rgba(37,99,235,0.1);
+      --right: #16a34a;
+      --wrong: #dc2626;
+    }
+    body {
+      background: var(--bg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    .wrap {
+      width: min(1000px, 100%);
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 12px 30px rgba(15,23,42,0.12);
+      padding: 20px 22px 28px;
+    }
+    h1 {
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .tag {
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: .7rem;
+      font-weight: 600;
+    }
+    .desc {
+      margin-bottom: 14px;
+      font-size: .9rem;
+      color: #4b5563;
+    }
+    .q {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px 14px 12px;
+      margin-bottom: 10px;
+      background: white;
+      transition: border .15s ease;
+    }
+    .q.correct { border-color: rgba(22,163,74,.5); background: #ecfdf3; }
+    .q.wrong { border-color: rgba(220,38,38,.5); background: #fef2f2; }
+    .q-num {
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    select, input[type=text] {
+      width: 220px;
+      padding: 5px 6px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: .9rem;
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .score {
+      margin-top: 6px;
+      font-weight: 600;
+    }
+    .wordbank {
+      margin: 14px 0 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .wb-pill {
+      background: #eef2ff;
+      color: #312e81;
+      padding: 3px 7px 4px;
+      border-radius: 999px;
+      font-size: .75rem;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .smalltxt {
+      font-size: .75rem;
+      color: #6b7280;
+    }
+    .coach {
+      font-size: .7rem;
+      margin-top: 3px;
+      color: #7f1d1d;
+    }
+    .coach.ok {
+      color: #166534;
+    }
+    .section-title {
+      margin-top: 18px;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    @media (max-width: 700px) {
+      select { width: 100%; }
+      .q { padding-bottom: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>
+      CPR / SFA Test Review
+      <span class="tag">Interactive + Coaching</span>
+    </h1>
+    <p class="desc">
+      Answer from the word bank. When you submit, wrong answers will tell you WHY they’re wrong.
+    </p>
+
+    <!-- WORD BANK -->
+    <div class="section-title">Word Bank</div>
+    <div id="wordbank" class="wordbank"></div>
+
+    <!-- QUESTIONS -->
+    <div class="section-title">Practice All Questions</div>
+    <div id="questions"></div>
+
+    <div class="row" style="margin-top:12px;">
+      <button id="checkBtn">Check Answers</button>
+      <button id="resetBtn" class="secondary">Reset</button>
+      <span id="score" class="score"></span>
+    </div>
+
+    <!-- RANDOM PRACTICE -->
+    <div class="section-title">Random Practice (1 at a time)</div>
+    <div class="q" id="randomBox">
+      <div class="q-num">
+        <span id="randLabel">Question</span>
+        <span class="smalltxt" id="randProgress"></span>
+      </div>
+      <div id="randText" style="margin-bottom:6px;"></div>
+      <select id="randSelect"></select>
+      <div class="row" style="margin-top:10px;">
+        <button id="randCheck">Check</button>
+        <button id="randNext" class="secondary">Next</button>
+        <span id="randFeedback" class="smalltxt"></span>
+      </div>
+      <div id="randCoach" class="coach"></div>
+    </div>
+
+    <p class="smalltxt" style="margin-top:20px;">
+      Tip: read the coaching notes — those are basically the test reminders.
+    </p>
+  </div>
+
+  <script>
+    // WORD BANK (from your sheet)
+    const wordBank = [
+      "Blood flow",
+      "Immobilize",
+      "Minimize",
+      "Contacted",
+      "Seizure",
+      "Noises",
+      "Arms",
+      "Cramps",
+      "Tight",
+      "Protect",
+      "Cooler",
+      "Warm",
+      "Open",
+      "Consent",
+      "Direct",
+      "Move",
+      "Diabetic",
+      "Breathing",
+      "Sterile",
+      "EMS",
+      "Unconscious",
+      "CPR",
+      "Conscious",
+      "Skin",
+      "Water",
+      "Breath",
+      "Heart Attack",
+      "Chest",
+      "Second",
+      "Coughing",
+      "Choking",
+      "Obvious",
+      "Exhausted",
+      "Life",
+      "Restart",
+      "Cycles"
+    ];
+
+    // QUESTIONS + COACHING
+    const questions = [
+      {
+        id:1,
+        text:"Unusual ____________, odors or behaviors are possible signals of an emergency.",
+        answer:"Noises",
+        coach:"Scene size-up: if something sounds wrong, treat it like it’s wrong."
+      },
+      {
+        id:2,
+        text:"By following standard precautions to _______________ yourself, you can minimize the risk of disease transition.",
+        answer:"Protect",
+        coach:"Gloves, barriers, wash hands. If you get sick, you can’t help anyone."
+      },
+      {
+        id:3,
+        text:"If a victim does not give _____________, do not give care but do call 9-1-1.",
+        answer:"Consent",
+        coach:"You need permission from a conscious, competent adult. No consent = no care (unless they go unconscious)."
+      },
+      {
+        id:4,
+        text:"__________ an injured victim only if the scene is becoming unsafe, you need to reach another person or need a better location.",
+        answer:"Move",
+        coach:"Don’t move people with possible spine/head injuries unless you HAVE to."
+      },
+      {
+        id:5,
+        text:"You should call 9-1-1 if a victim has trouble __________________.",
+        answer:"Breathing",
+        coach:"Breathing problems are always high priority — call first."
+      },
+      {
+        id:6,
+        text:"The best method of checking to see if a victim is _______________ is to gently tap them and ask if they are okay.",
+        answer:"Unconscious",
+        coach:"Tap and shout is the standard. No response = treat as unconscious and call 9-1-1."
+      },
+      {
+        id:7,
+        text:"Check a _____________ person by getting consent, asking questions and not touching or moving painful areas.",
+        answer:"Conscious",
+        coach:"Talk first, then touch. Let them tell you what hurts."
+      },
+      {
+        id:8,
+        text:"A person who is experiencing shock should never be given _______________.",
+        answer:"Water",
+        coach:"Shock = organs aren’t getting enough blood. Don’t give food/drink — they might vomit."
+      },
+      {
+        id:9,
+        text:"A person who has trouble breathing may have deep or shallow breathing or changes in _________ color.",
+        answer:"Skin",
+        coach:"Blue/gray/pale skin = not enough oxygen."
+      },
+      {
+        id:10,
+        text:"A person experiencing pain or discomfort in the chest lasting more than three to five minutes may be having a ________________.",
+        answer:"Heart Attack",
+        coach:"Chest pain 3–5 min = treat like heart attack, call 9-1-1."
+      },
+      {
+        id:11,
+        text:"When giving a rescue breath to an adult or child, it should last no longer than a ____________.",
+        answer:"Second",
+        coach:"1 slow second — just enough to make the chest rise, don’t blast air in."
+      },
+      {
+        id:12,
+        text:"A conscious adult should receive back blows and abdominal thrusts when experiencing ________________.",
+        answer:"Choking",
+        coach:"Choking + can’t cough/speak/breathe = start 5 and 5."
+      },
+      {
+        id:13,
+        text:"Check for signs of ______________ for no more than ten seconds.",
+        answer:"Life",
+        coach:"Don’t waste time — 10 seconds max, then start care."
+      },
+      {
+        id:14,
+        text:"Continue CPR until you are too ________________ to continue.",
+        answer:"Exhausted",
+        coach:"Once you start CPR, you don’t quit just because you feel like it — only if you physically can’t."
+      },
+      {
+        id:15,
+        text:"You should complete five ________________ of CPR in 2 minutes.",
+        answer:"Cycles",
+        coach:"1 cycle = 30 compressions + 2 breaths. In 2 minutes you should hit about 5 cycles."
+      },
+      {
+        id:16,
+        text:"CPR does not ____________ the heart. It provides it with blood containing oxygen.",
+        answer:"Restart",
+        coach:"CPR keeps the brain alive. AED is what can restart the heart rhythm."
+      },
+      {
+        id:17,
+        text:"Do not stop CPR unless you see _____________ signs of life, an AED arrives or another trained responder takes over.",
+        answer:"Obvious",
+        coach:"Real signs of life: moving, breathing, coughing — not ‘they kind of looked better.’"
+      },
+      {
+        id:18,
+        text:"If a child is choking make sure you encourage him/her to keep ____________.",
+        answer:"Coughing",
+        coach:"If they can cough, let them cough — it’s working. Don’t grab them right away."
+      },
+      {
+        id:19,
+        text:"Breathe into the victim only enough to see the ___________ clearly rise and fall.",
+        answer:"Chest",
+        coach:"Watch the chest, not the clock. Overbreathing can push air into the stomach."
+      },
+      {
+        id:20,
+        text:"Give a child one _______________ every three seconds.",
+        answer:"Breath",
+        coach:"Child rescue breathing: 1 breath every 3 seconds. (Adult is slower.)"
+      },
+      {
+        id:21,
+        text:"The cycle of chest compressions and rescue breathing during ________ is 30 compressions to 2 rescue breaths.",
+        answer:"CPR",
+        coach:"Classic ratio: 30:2. If you don’t remember anything else, remember that."
+      },
+      {
+        id:22,
+        text:"Stop and check for signs of life for a child during rescue breathing after the first minute and not again until _______________ arrives.",
+        answer:"EMS",
+        coach:"Check once, then keep going. Don’t stop every minute — wait for EMS."
+      },
+      {
+        id:23,
+        text:"If a victim burns their hand, stop the burning, cool it with cold water and cover it with loose, dry and _______________ dressing.",
+        answer:"Sterile",
+        coach:"Loose, dry, sterile — not ointment, not butter, not tape-wrapped tight."
+      },
+      {
+        id:24,
+        text:"Too much or too little sugar is a result of a ____________ emergency.",
+        answer:"Diabetic",
+        coach:"Diabetes = sugar problem. If they can swallow, sugar can help low blood sugar."
+      },
+      {
+        id:25,
+        text:"When the bone has torn through the skin, you have an _________ fracture.",
+        answer:"Open",
+        coach:"Bone out = open fracture. Don’t push it back in."
+      },
+      {
+        id:26,
+        text:"A splint should never be too ___________ where circulation has been slowed.",
+        answer:"Tight",
+        coach:"Splint ‘snug not strangled.’ Always check feeling, warmth, color."
+      },
+      {
+        id:27,
+        text:"When a victim is having a ______________, protect the head and remove nearby objects.",
+        answer:"Seizure",
+        coach:"Don’t hold them down, don’t put stuff in their mouth — just protect."
+      },
+      {
+        id:28,
+        text:"Blockage of __________ to the brain is known as a stroke.",
+        answer:"Blood flow",
+        coach:"Stroke = brain isn’t getting blood. FAST it and call 9-1-1."
+      },
+      {
+        id:29,
+        text:"When a victim has a head, neck or back injury, _____________ movement of the head, neck and back.",
+        answer:"Minimize",
+        coach:"Spinal injuries: keep them still, support the head."
+      },
+      {
+        id:30,
+        text:"The progression of heat stroke are ___________, exhaustion and then stroke.",
+        answer:"Cramps",
+        coach:"Heat problems start small (cramps) and get worse. Stop it early."
+      },
+      {
+        id:31,
+        text:"A victim of frostbite or hypothermia should be taken to a _______ environment and have hands rewarmed.",
+        answer:"Warm",
+        coach:"Get them somewhere warm and rewarm slowly."
+      },
+      {
+        id:32,
+        text:"Apply _________ pressure to a bleeding wound.",
+        answer:"Direct",
+        coach:"The #1 bleeding control skill: direct pressure right on the wound."
+      },
+      {
+        id:33,
+        text:"A victim of heat exhaustion should be brought out of the heat and into a ___________ environment.",
+        answer:"Cooler",
+        coach:"Cool them down, loosen clothing, sip water if they can."
+      },
+      {
+        id:34,
+        text:"F.A.S.T…Face, ___________, Speech and Time for stroke victims.",
+        answer:"Arms",
+        coach:"If the arm drifts or is weak — that’s a stroke clue. Call fast."
+      },
+      {
+        id:35,
+        text:"R.I.C.E …Rest, _________, Cold and Elevate for strains, sprains and fractures.",
+        answer:"Immobilize",
+        coach:"Don’t let them keep using the injured part. Immobilize = keep it still."
+      },
+      {
+        id:36,
+        text:"A victim of poisoning or allergic reactions should be cared for after 9-1-1 has been ________________.",
+        answer:"Contacted",
+        coach:"Call first so they can tell you if you need epi, rinse, or watch them."
+      }
+    ];
+
+    // build word bank display
+    const wbEl = document.getElementById("wordbank");
+    wordBank.forEach(w => {
+      const span = document.createElement("span");
+      span.className = "wb-pill";
+      span.textContent = w;
+      wbEl.appendChild(span);
+    });
+
+    // build questions with dropdowns
+    const qContainer = document.getElementById("questions");
+    questions.forEach(q => {
+      const div = document.createElement("div");
+      div.className = "q";
+      div.dataset.id = q.id;
+
+      const h = document.createElement("div");
+      h.className = "q-num";
+      h.innerHTML = `<span>${q.id}. </span><span class="smalltxt">Answer from word bank</span>`;
+      div.appendChild(h);
+
+      const p = document.createElement("div");
+      p.textContent = q.text;
+      p.style.marginBottom = "6px";
+      div.appendChild(p);
+
+      const sel = document.createElement("select");
+      sel.id = "q" + q.id;
+      const blankOpt = document.createElement("option");
+      blankOpt.value = "";
+      blankOpt.textContent = "-- select --";
+      sel.appendChild(blankOpt);
+
+      [...wordBank].sort((a,b)=>a.localeCompare(b)).forEach(w => {
+        const opt = document.createElement("option");
+        opt.value = w;
+        opt.textContent = w;
+        sel.appendChild(opt);
+      });
+      div.appendChild(sel);
+
+      const fb = document.createElement("div");
+      fb.id = "fb" + q.id;
+      fb.className = "smalltxt";
+      fb.style.marginTop = "5px";
+      div.appendChild(fb);
+
+      const coach = document.createElement("div");
+      coach.id = "coach" + q.id;
+      coach.className = "coach";
+      div.appendChild(coach);
+
+      qContainer.appendChild(div);
+    });
+
+    // check answers
+    const checkBtn = document.getElementById("checkBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const scoreEl = document.getElementById("score");
+
+    checkBtn.addEventListener("click", () => {
+      let correct = 0;
+      questions.forEach(q => {
+        const userVal = document.getElementById("q"+q.id).value;
+        const box = document.querySelector('.q[data-id="'+q.id+'"]');
+        const fb = document.getElementById("fb"+q.id);
+        const coach = document.getElementById("coach"+q.id);
+        if (userVal === q.answer) {
+          correct++;
+          box.classList.add("correct");
+          box.classList.remove("wrong");
+          fb.textContent = "✓ Correct";
+          fb.style.color = "#166534";
+          coach.textContent = q.coach;
+          coach.classList.add("ok");
+        } else {
+          box.classList.add("wrong");
+          box.classList.remove("correct");
+          fb.textContent = "✗ Correct answer: " + q.answer;
+          fb.style.color = "#b91c1c";
+          coach.textContent = "Coach: " + q.coach;
+          coach.classList.remove("ok");
+        }
+      });
+      scoreEl.textContent = `Score: ${correct} / ${questions.length}`;
+    });
+
+    resetBtn.addEventListener("click", () => {
+      questions.forEach(q => {
+        document.getElementById("q"+q.id).value = "";
+        const box = document.querySelector('.q[data-id="'+q.id+'"]');
+        box.classList.remove("correct","wrong");
+        document.getElementById("fb"+q.id).textContent = "";
+        document.getElementById("coach"+q.id).textContent = "";
+      });
+      scoreEl.textContent = "";
+    });
+
+    // RANDOM PRACTICE
+    const randSelect = document.getElementById("randSelect");
+    const randText = document.getElementById("randText");
+    const randLabel = document.getElementById("randLabel");
+    const randFeedback = document.getElementById("randFeedback");
+    const randCoach = document.getElementById("randCoach");
+    const randCheck = document.getElementById("randCheck");
+    const randNext = document.getElementById("randNext");
+    const randProgress = document.getElementById("randProgress");
+
+    let randCurrent = null;
+    let seen = new Set();
+
+    function loadRandomQuestion() {
+      if (seen.size === questions.length) seen.clear(); // loop again
+      const remaining = questions.filter(q => !seen.has(q.id));
+      const q = remaining[Math.floor(Math.random() * remaining.length)];
+      randCurrent = q;
+      randText.textContent = q.text;
+      randLabel.textContent = "Question " + q.id;
+      randFeedback.textContent = "";
+      randCoach.textContent = "";
+      randProgress.textContent = `${seen.size} practiced / ${questions.length}`;
+
+      // build dropdown
+      randSelect.innerHTML = "";
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = "-- select --";
+      randSelect.appendChild(blank);
+      [...wordBank].sort((a,b)=>a.localeCompare(b)).forEach(w => {
+        const opt = document.createElement("option");
+        opt.value = w;
+        opt.textContent = w;
+        randSelect.appendChild(opt);
+      });
+    }
+
+    randCheck.addEventListener("click", () => {
+      const val = randSelect.value;
+      if (!val) {
+        randFeedback.textContent = "Pick something.";
+        randFeedback.style.color = "#b91c1c";
+        randCoach.textContent = "";
+        return;
+      }
+      if (val === randCurrent.answer) {
+        randFeedback.textContent = "Correct ✅";
+        randFeedback.style.color = "#166534";
+        randCoach.textContent = randCurrent.coach;
+        randCoach.classList.add("ok");
+        seen.add(randCurrent.id);
+        randProgress.textContent = `${seen.size} practiced / ${questions.length}`;
+      } else {
+        randFeedback.textContent = "Nope. Correct answer: " + randCurrent.answer;
+        randFeedback.style.color = "#b91c1c";
+        randCoach.textContent = "Coach: " + randCurrent.coach;
+        randCoach.classList.remove("ok");
+      }
+    });
+
+    randNext.addEventListener("click", loadRandomQuestion);
+
+    // init first random
+    loadRandomQuestion();
+  </script>
+</body>
+</html>
